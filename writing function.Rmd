@@ -1,0 +1,186 @@
+---
+title: "writing function"
+author: "Chen Liang"
+date: "2023-10-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(rvest)
+```
+
+```{r cars}
+set.seed(12345)
+```
+
+## z score function
+
+Z scores subtract the mean adn divide by the sd
+
+```{r pressure, echo=FALSE}
+x_vec = rnorm(25, mean = 5, sd = 3)
+
+```
+
+Compute Z score for `x_vec`
+
+```{r}
+(x_vec - mean(x_vec)) / sd(x_vec)
+```
+
+Write a function to do this
+
+```{r}
+z_scores = function(x) {
+  z= (x - mean(x)) / sd(x)
+  z
+  
+}
+```
+
+
+Check that this work
+```{r}
+z_scores(x=x_vec)
+
+z_scores
+```
+
+Keep checking
+
+```{r}
+
+#z_scores(x=3)
+
+#z_scores(c("my","name","is","jeff"))
+
+#z_scores(c(TRUE,TRUE,FALSE,TRUE))
+
+#z_scores(iris)
+
+```
+
+## Multiple output
+
+Writing a function that returns the mean and sd from a sample of numbers
+
+```{r}
+mean_and_sd=function(x) {
+   if (!is.numeric(x)) {
+    stop("Argument x should be numeric")
+  } else if (length(x) < 2) {
+    stop("Z scores cannot be computed for length 1 vectors")
+  }
+  mean_x=mean(x)
+sd_x=sd(x)
+
+tibble(
+  mean=mean_x,
+  sd=sd_x
+)
+}
+
+```
+
+Double check
+```{r}
+mean_and_sd(x_vec)
+```
+
+### Star getting means and sds
+
+```{r}
+x_vec = rnorm(n=30,mean=5,sd=.5)
+
+tibble(
+  mean=mean(x_vec),
+  sd=sd(x_vec)
+)
+```
+
+Let;s write a function uses`n`, a true mean, and true SD as inputs
+
+```{r}
+sim_mean_sd = function(n=n, mean=mu, sd=sigma) {
+  
+  sim_data = tibble(
+    x = rnorm(n, mean , sd),
+  )
+  
+  tibble(
+  mean=mean(x_vec),
+  sd=sd(x_vec)
+)
+}
+
+#sim_mean_sd(n=3000, mu=50)
+sim_mean_sd(12,24,4)
+```
+
+```{r}
+fellowship_ring = readxl::read_excel("data/LotR_Words.xlsx", range = "B3:D6") |>
+  mutate(movie = "fellowship_ring")
+
+two_towers = readxl::read_excel("data/LotR_Words.xlsx", range = "F3:H6") |>
+  mutate(movie = "two_towers")
+
+return_king = readxl::read_excel("data/LotR_Words.xlsx", range = "J3:L6") |>
+  mutate(movie = "return_king")
+
+lotr_tidy = bind_rows(fellowship_ring, two_towers, return_king) |>
+  janitor::clean_names() |>
+  pivot_longer(
+    female:male,
+    names_to = "sex",
+    values_to="words"
+  ) |>
+  mutate(race = str_to_lower(race)) |> 
+  select(movie, everything()) 
+```
+
+```{r}
+nsduh_url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+nsduh_html = read_html(nsduh_url)
+
+data_marj = 
+  nsduh_html |> 
+  html_table() |> 
+  nth(1) |>
+  slice(-1) |> 
+  select(-contains("P Value")) |>
+  pivot_longer(
+    -State,
+    names_to = "age_year", 
+    values_to = "percent") |>
+  separate(age_year, into = c("age", "year"), sep = "\\(") |>
+  mutate(
+    year = str_replace(year, "\\)", ""),
+    percent = str_replace(percent, "[a-c]$", ""),
+    percent = as.numeric(percent)) |>
+  filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+```
+
+```{r}
+nsduh_table <- function(html, table_num, table_name) {
+  
+  table = 
+    html |> 
+    html_table() |> 
+    nth(table_num) |>
+    slice(-1) |> 
+    select(-contains("P Value")) |>
+    pivot_longer(
+      -State,
+      names_to = "age_year", 
+      values_to = "percent") |>
+    separate(age_year, into = c("age", "year"), sep = "\\(") |>
+    mutate(
+      year = str_replace(year, "\\)", ""),
+      percent = str_replace(percent, "[a-c]$", ""),
+      percent = as.numeric(percent),
+      name = table_name) |>
+    filter(!(State %in% c("Total U.S.", "Northeast", "Midwest", "South", "West")))
+}
+```
